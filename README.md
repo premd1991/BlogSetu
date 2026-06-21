@@ -1,150 +1,79 @@
-# SetuBlog - MERN Full-Stack Editorial Platform
+# SetuBlog
 
-![SetuBlog Banner](assets/banner.png)
+## Motivation
+Based on the requests that I got to demonstrate a production-grade full-stack blogging system built on the MERN stack.
 
-SetuBlog is a modern, high-performance, full-stack blogging platform built using the **MERN** stack (MongoDB, Express, React, Node.js). 
-
-Named **Setu** (Sanskrit for *bridge*), the platform is engineered to serve as a clean, minimalist editorial bridge—connecting writers with distraction-free creation tools, and readers with responsive, high-contrast, and readable layouts.
-
----
-
-## 🗺️ How the Project Works (Architecture)
-
-SetuBlog is split into a decoupled Client (Vite + React) and API Server (Node + Express) architecture, utilizing secure HttpOnly sessions.
-
-### System Data Flow
-
-```mermaid
-graph TD
-    %% Define Nodes
-    Client[React Client <br> Vite + Tailwind]
-    CookieJar[HttpOnly Cookies <br> Access Token]
-    RateLimit[Express Rate Limiters <br> Global & Auth limits]
-    Router[Express API Router <br> /api/v1/user, blog, social]
-    AuthCheck[Auth Middleware <br> JWT verify]
-    Controller[Controllers <br> User, Blog, Social]
-    Mongoose[Mongoose ODM]
-    MongoDB[(MongoDB Atlas)]
-
-    %% Define Connections
-    Client -->|1. HTTPS Request| RateLimit
-    Client -.->|Reads/Writes JWT implicitly| CookieJar
-    RateLimit -->|2. Route Processing| Router
-    Router -->|3. Route Guard| AuthCheck
-    AuthCheck -->|4. Authenticated Context| Controller
-    Controller -->|5. Data Operations| Mongoose
-    Mongoose -->|6. Query / Write| MongoDB
-```
-
-### Authentication & API Session Lifecycle
-
-1. **Registration/Login**: The User requests authorization via the client. The request goes through an auth rate limiter (max 20 requests per 15 minutes).
-2. **Token Generation**: The server checks coordinates, hashes the password via `bcryptjs`, issues a signed JWT, and attaches it as an `httpOnly`, `secure`, `sameSite: strict` cookie.
-3. **Session Verification**: For every subsequent social engagement (like, comment, follow) or blog management action (create/edit/delete), the client passes the cookie automatically. The `handleVerifyUserLogin` middleware intercepts, decodes the token, and attaches the user payload.
-4. **Data Retrieval**: Mongoose aggregates documents, executes regex search queries, skips pages for server-side pagination, and projects results to strip password keys before sending data back to the client.
+I decided to create SetuBlog—a MERN (MongoDB, Express, React 19, Node.js) based publishing web application. The goal is to help full-stack developers learn clean architecture, state management (using React Context), and how to decouple modules effectively while maintaining premium visual layouts and strict security protocols.
 
 ---
 
-## 🛡️ Production-Grade Security Features
+## Introduction
+It's a good practice to keep a simple and organized architecture. There are various techniques, design patterns, and folder structures that are used by developers for their projects, and it's perfectly fine to have your own unique architecture.
 
-SetuBlog is designed with enterprise security constraints:
-- **HttpOnly JWT Session Cookies**: Tokens are hidden from client-side JavaScript execution (defeating Cross-Site Scripting (XSS) extraction).
-- **Targeted Rate Limiting**: Employs independent rate-limiting nodes to protect databases from brute-force login attempts and DDoS bottlenecks.
-- **Password Hashing Protection**: Automated pre-save Mongoose database middleware ensures passwords are never saved in plain text.
-- **Strict Permission Guard Rails**: Users can only edit or delete blogs/comments they own. Administrators retain global housekeeping capability.
-
----
-
-## ⚡ Key Technical Features
-
-- **Decoupled Pagination**: Full server-side pagination math prevents heavy database overheads by supplying chunked pages (`blogs`, `totalPages`, `currentPage`).
-- **Keyword Search & Filter Engine**: Integrated Mongo `$or` query matching titles, descriptions, and categories dynamically using case-insensitive Regex.
-- **Social Engagement Graphs**: Includes follower/following relationship arrays embedded inside the User model, updating synchronously upon follow toggle triggers.
-- **Premium CSS v4 & Dark Mode**: Engineered with Tailwind CSS v4 variables (Outfit for display, Plus Jakarta Sans for body text) supporting reactive theme transitions.
-- **Rich Text Studio Editor**: Integrates `jodit-react` to supply authors with premium layout creation and drafting capabilities.
+The end goal of the usage of any design or architectural pattern is usually the same:
+* **Adding a new requirement should be easy.** (Modular API routers and component-focused frontend design make extension seamless).
+* **Completing any new task/requirement should not break any existing features.** (Auth guards, rate limiters, and decoupled controllers keep systems independent).
+* **It should enable individual development & deployment of features.** (Separating backend controllers from frontend layout components ensures parallel development).
+* **Components/Modules should be testable without dependencies.** (Database utilities and route services can be isolated for mock validations).
 
 ---
 
-## 📡 API Reference Map
+## Screenshots
+### Web Client Interface (Light / Dark Modes)
 
-All API endpoints are prefixed with `/api/v1`.
-
-### 🔑 Authentication & Users
-
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/user/register` | Register a new profile | Public (Rate-limited) |
-| `POST` | `/user/login` | Log in and receive secure cookie | Public (Rate-limited) |
-| `GET` | `/user/logout` | Clear cookie and terminate session | Private |
-| `GET` | `/user/me` | Fetch active user credentials | Private |
-| `POST` | `/user/edit` | Update profile info | Private |
-| `POST` | `/user/delete` | Delete account | Private |
-
-### 📝 Blog Management
-
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/blog/` | Fetch all articles (Paginated, Searchable) | Public |
-| `GET` | `/blog/:id` | Fetch details of a single post | Public |
-| `POST` | `/blog/` | Create a new blog post | Private |
-| `GET` | `/blog/my-blogs` | Get blogs written by current user | Private |
-| `PATCH` | `/blog/:id` | Update single blog details | Private (Owner/Admin) |
-| `DELETE` | `/blog/:id` | Remove blog post from database | Private (Owner/Admin) |
-
-### 💬 Social Interactions
-
-| Method | Endpoint | Description | Access |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/social/like/:id` | Toggle like status on a blog | Private |
-| `POST` | `/social/comment/:id` | Write a comment on a blog | Private |
-| `DELETE` | `/social/comment/:id/:commentId` | Delete a comment | Private (Owner/Admin) |
-| `POST` | `/social/follow/:userId` | Follow or unfollow a blogger | Private |
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| ![SetuBlog Light Mode](assets/about_light.png) | ![SetuBlog Dark Mode](assets/about_dark.png) |
 
 ---
 
-## 🚀 Getting Started
-
-### 📋 Prerequisites
-- **Node.js** (v18+ recommended)
-- **MongoDB Atlas** database account URI
-- **Git**
-
-### 🔧 Environment Setup
-Create a `.env` file inside the `backend` folder:
-```env
-PORT=8000
-MONGO_URI=your_mongodb_connection_string
-JWT_PRIVATE_KEY=your_secure_jwt_secret_key
-NODE_ENV=development
-```
-
-### 💻 Running Locally
-
-#### 1. Clone the repository
-```bash
-git clone https://github.com/premd1991/BlogSetu.git
-cd BlogSetu
-```
-
-#### 2. Start the Backend API Server
-```bash
-cd backend
-npm install
-npm start
-```
-*Server will listen at: http://localhost:8000/*
-
-#### 3. Start the Frontend Client
-```bash
-cd ../frontend
-npm install
-npm run dev
-```
-*Client will compile and host at: http://localhost:5173/*
+## Languages / Frameworks Used
+* **React 19 & Vite** (Frontend Client)
+* **Tailwind CSS v4** (Aesthetic Design Tokens & Transitions)
+* **Node.js & Express 5** (API Backend Server)
+* **MongoDB & Mongoose** (Database Schema & Aggregations)
+* **JWT (JSON Web Tokens)** (HttpOnly Secure Session Cookies)
+* **Express Rate Limit** (DDoS & Brute Force Prevention)
 
 ---
 
-## 🎨 Design Systems
-- **Fonts**: Outfit (Geometric headings), Plus Jakarta Sans (Sleek body)
-- **Colors**: Orange Brand (Primary), Slate (Neutral backgrounds), White/Dark glassmorphisms
-- **Aesthetic**: Premium minimalist, thin borders, micro-animations, fast transitions.
+## How to run the project ?
+1. **Clone the project:**
+   ```bash
+   git clone https://github.com/premd1991/BlogSetu.git
+   cd BlogSetu
+   ```
+2. **Configure Environment variables:**
+   Create a `.env` file inside the `backend/` folder:
+   ```env
+   PORT=8000
+   MONGO_URI=your_mongodb_atlas_connection_string
+   JWT_PRIVATE_KEY=your_secure_jwt_secret_key
+   NODE_ENV=development
+   ```
+3. **Start the Backend API Server:**
+   ```bash
+   cd backend
+   npm install
+   npm start
+   ```
+4. **Start the Frontend Client:**
+   ```bash
+   cd ../frontend
+   npm install
+   npm run dev
+   ```
+
+---
+
+## Having trouble ?
+If you are having trouble with this project or if you find any bugs, do open a new issue and describe the problem.
+Alternatively, you can drop me a mail @ praveen.dangwal1991@gmail.com.
+
+---
+
+## Spread the word!
+Liked the project? Just give it a star ⭐️ and spread the word!
+
+## Credits
+© Praveen Dangwal | 2026
